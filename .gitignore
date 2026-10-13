@@ -1,0 +1,6 @@
+__pycache__/
+.venv/
+*.db
+.pytest_cache/
+body.json
+cambio.json
