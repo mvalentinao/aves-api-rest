@@ -1,8 +1,10 @@
 import os
 import sqlite3
-from datetime import datetime
+from contextlib import contextmanager
 
 from flask import Flask, jsonify, request
+
+from validador import CAMPOS, RelojSistema, ValidadorDeAvistamiento
 
 app = Flask(__name__)
 app.json.ensure_ascii = False  # tildes legibles en las respuestas JSON
@@ -12,13 +14,22 @@ DB_PATH = os.environ.get(
     "DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "avistamientos.db")
 )
 
-CAMPOS = ("especie", "lugar", "fecha", "observador")
+# La regla de negocio vive en validador.py. El reloj real se inyecta aquí;
+# las pruebas reemplazan este objeto por uno con un reloj fijo.
+validador = ValidadorDeAvistamiento(RelojSistema())
 
 
+@contextmanager
 def get_db():
+    """Abre la base, confirma (commit) al salir del bloque y cierra la conexión.
+    Con `with sqlite3.connect()` a secas la conexión se confirma pero no se cierra."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 def init_db():
@@ -36,24 +47,8 @@ def init_db():
         )
 
 
-def validar(datos):
-    """Devuelve un mensaje de error si los datos no son válidos, o None si están bien."""
-    if not isinstance(datos, dict):
-        return "El cuerpo debe ser un objeto JSON"
-    faltan = [
-        c for c in CAMPOS
-        if not isinstance(datos.get(c), str) or not datos[c].strip()
-    ]
-    if faltan:
-        return "Faltan datos o son inválidos: " + ", ".join(faltan)
-    fecha = datos["fecha"].strip()
-    try:
-        if len(fecha) != 10:
-            raise ValueError
-        datetime.strptime(fecha, "%Y-%m-%d")
-    except ValueError:
-        return "La fecha debe tener el formato AAAA-MM-DD y ser una fecha real"
-    return None
+def respuesta_400(errores):
+    return jsonify({"error": "; ".join(errores)}), 400
 
 
 def buscar(conn, id):
@@ -89,9 +84,9 @@ def ver(id):
 @app.post("/avistamientos")
 def crear():
     datos = request.get_json(silent=True)
-    error = validar(datos)
-    if error:
-        return jsonify({"error": error}), 400
+    errores = validador.validar(datos)
+    if errores:
+        return respuesta_400(errores)
     with get_db() as conn:
         cur = conn.execute(
             "INSERT INTO avistamientos (especie, lugar, fecha, observador) VALUES (?, ?, ?, ?)",
@@ -107,9 +102,9 @@ def actualizar(id):
     with get_db() as conn:
         if buscar(conn, id) is None:
             return jsonify({"error": "Avistamiento no encontrado"}), 404
-        error = validar(datos)
-        if error:
-            return jsonify({"error": error}), 400
+        errores = validador.validar(datos)
+        if errores:
+            return respuesta_400(errores)
         conn.execute(
             "UPDATE avistamientos SET especie = ?, lugar = ?, fecha = ?, observador = ? WHERE id = ?",
             tuple(datos[c].strip() for c in CAMPOS) + (id,),

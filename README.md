@@ -6,6 +6,13 @@ API REST pequeña para registrar avistamientos de aves. Está hecha con **Python
 
 Incluye los dos puntos opcionales del enunciado: el endpoint `GET /avistamientos/resumen` y pruebas automáticas con `pytest`.
 
+**Taller de pruebas:** la regla de negocio de los avistamientos está separada en `validador.py` y se prueba en dos niveles (unitarias e integración) con medición de cobertura. El análisis completo está en [`docs/justificacion-pruebas.md`](docs/justificacion-pruebas.md). Comandos rápidos:
+
+```bash
+pytest                                                                    # correr todas las pruebas
+pytest --cov=app --cov=validador --cov-branch --cov-report=term-missing   # cobertura
+```
+
 ## Requisitos previos
 
 Antes de instalar o ejecutar nada, necesitas tener esto en tu computador:
@@ -21,6 +28,7 @@ Antes de instalar o ejecutar nada, necesitas tener esto en tu computador:
 
 - **Flask** 3.0 o superior: framework web de la API.
 - **pytest** 8.0 o superior: pruebas automáticas.
+- **pytest-cov** 5.0 o superior: medición de cobertura de las pruebas.
 
 **Ya viene con Python, no hay que instalar nada:**
 
@@ -69,7 +77,7 @@ Sabrás que quedó activo porque el inicio de la línea de la terminal muestra `
 pip install -r requirements.txt
 ```
 
-Al final debe aparecer una línea `Successfully installed ...` con Flask y pytest.
+Al final debe aparecer una línea `Successfully installed ...` con Flask, pytest y pytest-cov.
 
 ### Paso 5. Verificar con las pruebas (opcional, recomendado)
 
@@ -77,7 +85,7 @@ Al final debe aparecer una línea `Successfully installed ...` con Flask y pytes
 pytest
 ```
 
-Debe terminar con `26 passed`. Las pruebas usan una base de datos temporal, así que no afectan tus datos.
+Debe terminar con `63 passed`. Las pruebas usan una base de datos temporal, así que no afectan tus datos.
 
 ### Paso 6. Cargar datos de ejemplo (opcional)
 
@@ -121,7 +129,13 @@ Para probar el resto de endpoints, abre **otra terminal** (deja la primera corri
 | `fecha`      | Texto en formato `AAAA-MM-DD`                 |
 | `observador` | Quién lo registró                             |
 
-En `POST` y `PUT` los cuatro campos (`especie`, `lugar`, `fecha`, `observador`) son obligatorios y deben ser texto no vacío. Si falta alguno o la fecha no tiene el formato `AAAA-MM-DD` (o no es una fecha real, como `2026-02-30`), la API responde `400`. Si el cuerpo trae un `id`, se ignora: lo asigna el sistema.
+En `POST` y `PUT` los cuatro campos (`especie`, `lugar`, `fecha`, `observador`) son obligatorios y deben ser texto no vacío. La regla de negocio (en `validador.py`) es:
+
+- La `especie` tiene entre **3 y 50 caracteres** (sin contar los espacios del inicio y del final).
+- La `fecha` tiene formato `AAAA-MM-DD`, es una fecha real (no `2026-02-30`) y **no es posterior a hoy**.
+- `lugar` y `observador` no están vacíos.
+
+Si algo no se cumple, la API responde `400` con un mensaje que indica qué campo falló (si fallan varios, los junta separados por `;`). Si el cuerpo trae un `id`, se ignora: lo asigna el sistema.
 
 ## Endpoints
 
@@ -236,29 +250,65 @@ Los errores también se devuelven en JSON, por ejemplo:
 
 ```json
 {"error": "Faltan datos o son inválidos: lugar, observador"}
+{"error": "especie: debe tener entre 3 y 50 caracteres (tiene 2)"}
+{"error": "fecha: no puede ser posterior a hoy"}
 ```
 
 ## Pruebas
 
 Con las dependencias instaladas (`pip install -r requirements.txt`), desde la carpeta del proyecto:
 
+**Correr todas las pruebas**
+
 ```bash
 pytest
 ```
 
-Las pruebas (`test_api.py`) cubren los seis endpoints y sus códigos de estado (`200`, `201`, `204`, `400`, `404`). Cada prueba usa una base de datos temporal, así que no tocan `avistamientos.db`.
+**Generar la cobertura** (resumen en la terminal, con el número de las líneas que faltan por cubrir)
+
+```bash
+pytest --cov=app --cov=validador --cov-branch --cov-report=term-missing
+```
+
+El resultado guardado de la última corrida está en `docs/cobertura.txt`. El análisis completo de las pruebas está en [`docs/justificacion-pruebas.md`](docs/justificacion-pruebas.md).
+
+**Correr solo un nivel**
+
+```bash
+pytest tests/test_validador.py     # unitarias: regla de negocio y reloj simulado
+pytest tests/test_integracion.py   # integración por HTTP: app Flask + SQLite
+pytest test_api.py                 # pruebas de la versión anterior de la API
+```
+
+Qué hay en cada archivo:
+
+- `tests/test_validador.py`: pruebas unitarias del validador, con partición de equivalencia y valores límite sobre `especie` y `fecha`. Usan un reloj fijo (`RelojFijo`, un stub) para que "hoy" sea siempre el mismo día.
+- `tests/test_integracion.py`: pruebas por HTTP de los seis endpoints (`200`, `201`, `204`, `400`, `404`). Verifican el cuerpo completo y el efecto (por ejemplo, después de un `POST`, el `GET` del nuevo id lo devuelve; después de un `DELETE`, da `404`).
+- `test_api.py`: las pruebas de la versión anterior de la API (26 pruebas). Se corren aparte con `pytest test_api.py`.
+
+Cada prueba usa una base de datos temporal, así que no tocan `avistamientos.db`.
 
 ## Estructura
 
 ```
-app.py            # API (endpoints, validación y acceso a SQLite)
-test_api.py       # Pruebas automáticas (pytest)
-seed.py           # Carga datos de ejemplo (opcional)
-requirements.txt  # Dependencias (Flask y pytest)
-.gitignore        # Excluye la base de datos, caché y entorno virtual
+app.py                       # API (endpoints y acceso a SQLite)
+validador.py                 # Regla de negocio + interfaz Reloj (sin Flask ni SQLite)
+test_api.py                  # Pruebas de la versión anterior (pytest test_api.py)
+seed.py                      # Carga datos de ejemplo (opcional)
+requirements.txt             # Dependencias (Flask, pytest y pytest-cov)
+pytest.ini                   # Configuración de pytest
+tests/
+  conftest.py                # Fixtures: cliente HTTP, base temporal y reloj fijo
+  relojes.py                 # RelojFijo (stub)
+  test_validador.py          # Pruebas unitarias
+  test_integracion.py        # Pruebas de integración por HTTP
+docs/
+  justificacion-pruebas.md   # Documento de justificación
+  cobertura.txt              # Resultado de la cobertura
+.gitignore                   # Excluye la base de datos, caché y entorno virtual
 README.md
 ```
 
 ## Uso de IA
 
-Se usó **Claude (Anthropic), modelo Sonnet 5.5**, como apoyo para generar y revisar el código, las pruebas y este README. Revisé el código y lo entiendo.
+Se usó **Claude (Anthropic), modelo Sonnet 5.5**, como apoyo para generar y revisar el código, las pruebas, posteriormente a esto se revisa el codigo y se termina de afianzar el conocimiento sobre el mismo. 
