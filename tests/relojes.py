@@ -1,7 +1,7 @@
 """Dobles de prueba para el reloj."""
 from datetime import date
 
-from validador import Reloj
+from avistamientos.nucleo.interfaces.reloj import Reloj
 
 
 class RelojFijo(Reloj):
