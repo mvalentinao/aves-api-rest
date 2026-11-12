@@ -10,7 +10,7 @@ import pytest  # noqa: E402
 
 import app as app_module  # noqa: E402
 from tests.relojes import RelojFijo  # noqa: E402
-from validador import ValidadorDeAvistamiento  # noqa: E402
+from avistamientos.nucleo.servicios_dominio.validador import ValidadorDeAvistamiento  # noqa: E402
 
 HOY = date(2026, 10, 21)
 

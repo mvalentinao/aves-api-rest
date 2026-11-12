@@ -4,7 +4,9 @@ from contextlib import contextmanager
 
 from flask import Flask, jsonify, request
 
-from validador import CAMPOS, RelojSistema, ValidadorDeAvistamiento
+from avistamientos.infraestructura.reloj_sistema import RelojSistema
+from avistamientos.nucleo.modelo_dominio.avistamiento import CAMPOS
+from avistamientos.nucleo.servicios_dominio.validador import ValidadorDeAvistamiento
 
 app = Flask(__name__)
 app.json.ensure_ascii = False  # tildes legibles en las respuestas JSON

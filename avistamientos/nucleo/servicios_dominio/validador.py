@@ -1,30 +1,14 @@
-"""Regla de negocio de un avistamiento, separada del controlador HTTP.
+"""Servicio de dominio: la regla de negocio de un avistamiento.
 
-Este módulo no depende de Flask ni de SQLite, así que se prueba sin servidor
-ni base de datos. El reloj entra por el constructor (inyección de dependencias)
-para que las pruebas puedan fijar "hoy" con un stub.
+Vive en el núcleo. Depende del modelo de dominio y de la interfaz `Reloj`
+(que también es del núcleo), nunca de Flask ni de SQLite. El reloj entra por
+el constructor (inyección de dependencias) para que las pruebas puedan fijar
+"hoy" con un stub; la implementación real está en `infraestructura`.
 """
-from abc import ABC, abstractmethod
-from datetime import date, datetime
+from datetime import datetime
 
-CAMPOS = ("especie", "lugar", "fecha", "observador")
-ESPECIE_MIN = 3
-ESPECIE_MAX = 50
-
-
-class Reloj(ABC):
-    """Interfaz del reloj: lo único que la regla necesita saber es qué día es hoy."""
-
-    @abstractmethod
-    def hoy(self) -> date:
-        ...
-
-
-class RelojSistema(Reloj):
-    """Implementación real, usada en producción."""
-
-    def hoy(self) -> date:
-        return date.today()
+from avistamientos.nucleo.interfaces.reloj import Reloj
+from avistamientos.nucleo.modelo_dominio.avistamiento import CAMPOS, ESPECIE_MAX, ESPECIE_MIN
 
 
 class ValidadorDeAvistamiento:

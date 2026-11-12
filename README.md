@@ -10,7 +10,7 @@ Incluye los dos puntos opcionales del enunciado: el endpoint `GET /avistamientos
 
 ```bash
 pytest                                                                    # correr todas las pruebas
-pytest --cov=app --cov=validador --cov-branch --cov-report=term-missing   # cobertura
+pytest --cov=app --cov=avistamientos --cov-branch --cov-report=term-missing   # cobertura
 ```
 
 ## Requisitos previos
@@ -267,7 +267,7 @@ pytest
 **Generar la cobertura** (resumen en la terminal, con el número de las líneas que faltan por cubrir)
 
 ```bash
-pytest --cov=app --cov=validador --cov-branch --cov-report=term-missing
+pytest --cov=app --cov=avistamientos --cov-branch --cov-report=term-missing
 ```
 
 El resultado guardado de la última corrida está en `docs/cobertura.txt`. El análisis completo de las pruebas está en [`docs/justificacion-pruebas.md`](docs/justificacion-pruebas.md).
