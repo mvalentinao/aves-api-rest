@@ -1,0 +1,237 @@
+[
+  {
+    "peticion": "GET /avistamientos",
+    "status": 200,
+    "content_type": "application/json",
+    "cuerpo": []
+  },
+  {
+    "peticion": "POST /avistamientos {\"especie\": \"colibrí\", \"lugar\": \"Chingaza\", \"fecha\": \"2024-02-29\", \"observador\": \"Pablo\"}",
+    "status": 201,
+    "content_type": "application/json",
+    "cuerpo": {
+      "id": 1,
+      "especie": "colibrí",
+      "lugar": "Chingaza",
+      "fecha": "2024-02-29",
+      "observador": "Pablo"
+    }
+  },
+  {
+    "peticion": "POST /avistamientos {\"especie\": \"  águila  \", \"lugar\": \" Sumapaz \", \"fecha\": \"2024-02-29\", \"observador\": \"Pablo\", \"id\": 99}",
+    "status": 201,
+    "content_type": "application/json",
+    "cuerpo": {
+      "id": 2,
+      "especie": "águila",
+      "lugar": "Sumapaz",
+      "fecha": "2024-02-29",
+      "observador": "Pablo"
+    }
+  },
+  {
+    "peticion": "POST /avistamientos {\"especie\": \"águila\", \"lugar\": \"Chingaza\", \"fecha\": \"2024-02-29\", \"observador\": \"Pablo\"}",
+    "status": 201,
+    "content_type": "application/json",
+    "cuerpo": {
+      "id": 3,
+      "especie": "águila",
+      "lugar": "Chingaza",
+      "fecha": "2024-02-29",
+      "observador": "Pablo"
+    }
+  },
+  {
+    "peticion": "POST /avistamientos {\"especie\": \"ab\", \"lugar\": \"Chingaza\", \"fecha\": \"2999-01-01\", \"observador\": \"Pablo\"}",
+    "status": 400,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "especie: debe tener entre 3 y 50 caracteres (tiene 2); fecha: no puede ser posterior a hoy"
+    }
+  },
+  {
+    "peticion": "POST /avistamientos {\"especie\": \"colibrí\", \"lugar\": \"Chingaza\", \"fecha\": \"2025-02-29\", \"observador\": \"Pablo\"}",
+    "status": 400,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "fecha: debe tener el formato AAAA-MM-DD y ser una fecha real"
+    }
+  },
+  {
+    "peticion": "POST /avistamientos {\"especie\": \"colibrí\"}",
+    "status": 400,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "Faltan datos o son inválidos: lugar, fecha, observador"
+    }
+  },
+  {
+    "peticion": "POST /avistamientos [\"no\", \"es\", \"objeto\"]",
+    "status": 400,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "El cuerpo debe ser un objeto JSON"
+    }
+  },
+  {
+    "peticion": "GET /avistamientos",
+    "status": 200,
+    "content_type": "application/json",
+    "cuerpo": [
+      {
+        "id": 1,
+        "especie": "colibrí",
+        "lugar": "Chingaza",
+        "fecha": "2024-02-29",
+        "observador": "Pablo"
+      },
+      {
+        "id": 2,
+        "especie": "águila",
+        "lugar": "Sumapaz",
+        "fecha": "2024-02-29",
+        "observador": "Pablo"
+      },
+      {
+        "id": 3,
+        "especie": "águila",
+        "lugar": "Chingaza",
+        "fecha": "2024-02-29",
+        "observador": "Pablo"
+      }
+    ]
+  },
+  {
+    "peticion": "GET /avistamientos/1",
+    "status": 200,
+    "content_type": "application/json",
+    "cuerpo": {
+      "id": 1,
+      "especie": "colibrí",
+      "lugar": "Chingaza",
+      "fecha": "2024-02-29",
+      "observador": "Pablo"
+    }
+  },
+  {
+    "peticion": "GET /avistamientos/999",
+    "status": 404,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "Avistamiento no encontrado"
+    }
+  },
+  {
+    "peticion": "GET /avistamientos/resumen",
+    "status": 200,
+    "content_type": "application/json",
+    "cuerpo": [
+      {
+        "especie": "águila",
+        "cantidad": 2
+      },
+      {
+        "especie": "colibrí",
+        "cantidad": 1
+      }
+    ]
+  },
+  {
+    "peticion": "PUT /avistamientos/1 {\"especie\": \"colibrí\", \"lugar\": \"Jardín Botánico\", \"fecha\": \"2024-02-29\", \"observador\": \"Pablo\"}",
+    "status": 200,
+    "content_type": "application/json",
+    "cuerpo": {
+      "id": 1,
+      "especie": "colibrí",
+      "lugar": "Jardín Botánico",
+      "fecha": "2024-02-29",
+      "observador": "Pablo"
+    }
+  },
+  {
+    "peticion": "PUT /avistamientos/1 {\"lugar\": \"otro\"}",
+    "status": 400,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "Faltan datos o son inválidos: especie, fecha, observador"
+    }
+  },
+  {
+    "peticion": "PUT /avistamientos/999 {\"especie\": \"colibrí\", \"lugar\": \"Chingaza\", \"fecha\": \"2024-02-29\", \"observador\": \"Pablo\"}",
+    "status": 404,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "Avistamiento no encontrado"
+    }
+  },
+  {
+    "peticion": "PUT /avistamientos/999 {\"lugar\": \"otro\"}",
+    "status": 404,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "Avistamiento no encontrado"
+    }
+  },
+  {
+    "peticion": "DELETE /avistamientos/2",
+    "status": 204,
+    "content_type": "text/html; charset=utf-8",
+    "cuerpo": ""
+  },
+  {
+    "peticion": "DELETE /avistamientos/2",
+    "status": 404,
+    "content_type": "application/json",
+    "cuerpo": {
+      "error": "Avistamiento no encontrado"
+    }
+  },
+  {
+    "peticion": "GET /avistamientos",
+    "status": 200,
+    "content_type": "application/json",
+    "cuerpo": [
+      {
+        "id": 1,
+        "especie": "colibrí",
+        "lugar": "Jardín Botánico",
+        "fecha": "2024-02-29",
+        "observador": "Pablo"
+      },
+      {
+        "id": 3,
+        "especie": "águila",
+        "lugar": "Chingaza",
+        "fecha": "2024-02-29",
+        "observador": "Pablo"
+      }
+    ]
+  },
+  {
+    "peticion": "GET /avistamientos/resumen",
+    "status": 200,
+    "content_type": "application/json",
+    "cuerpo": [
+      {
+        "especie": "colibrí",
+        "cantidad": 1
+      },
+      {
+        "especie": "águila",
+        "cantidad": 1
+      }
+    ]
+  },
+  {
+    "peticion": "GET /avistamientos/abc",
+    "status": 404,
+    "content_type": "text/html; charset=utf-8",
+    "cuerpo": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n"
+  },
+  {
+    "peticion": "GET /",
+    "status": 404,
+    "content_type": "text/html; charset=utf-8",
+    "cuerpo": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n"
+  }
+]

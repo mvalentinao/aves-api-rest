@@ -6,7 +6,7 @@ API REST pequeña para registrar avistamientos de aves. Está hecha con **Python
 
 Incluye los dos puntos opcionales del enunciado: el endpoint `GET /avistamientos/resumen` y pruebas automáticas con `pytest`.
 
-**Taller de pruebas:** la regla de negocio de los avistamientos está separada en `validador.py` y se prueba en dos niveles (unitarias e integración) con medición de cobertura. El análisis completo está en [`docs/justificacion-pruebas.md`](docs/justificacion-pruebas.md). Comandos rápidos:
+**Taller de pruebas:** la regla de negocio de los avistamientos está separada en el núcleo (`avistamientos/nucleo/servicios_dominio/validador.py`) y se prueba en dos niveles (unitarias e integración) con medición de cobertura. El análisis completo está en [`docs/justificacion-pruebas.md`](docs/justificacion-pruebas.md). Comandos rápidos:
 
 ```bash
 pytest                                                                    # correr todas las pruebas
@@ -85,7 +85,7 @@ Al final debe aparecer una línea `Successfully installed ...` con Flask, pytest
 pytest
 ```
 
-Debe terminar con `63 passed`. Las pruebas usan una base de datos temporal, así que no afectan tus datos.
+Debe terminar con `76 passed` (63 del taller de pruebas y 13 de la prueba de arquitectura). Las pruebas usan una base de datos temporal, así que no afectan tus datos.
 
 ### Paso 6. Cargar datos de ejemplo (opcional)
 
@@ -129,7 +129,7 @@ Para probar el resto de endpoints, abre **otra terminal** (deja la primera corri
 | `fecha`      | Texto en formato `AAAA-MM-DD`                 |
 | `observador` | Quién lo registró                             |
 
-En `POST` y `PUT` los cuatro campos (`especie`, `lugar`, `fecha`, `observador`) son obligatorios y deben ser texto no vacío. La regla de negocio (en `validador.py`) es:
+En `POST` y `PUT` los cuatro campos (`especie`, `lugar`, `fecha`, `observador`) son obligatorios y deben ser texto no vacío. La regla de negocio (en `avistamientos/nucleo/servicios_dominio/validador.py`) es:
 
 - La `especie` tiene entre **3 y 50 caracteres** (sin contar los espacios del inicio y del final).
 - La `fecha` tiene formato `AAAA-MM-DD`, es una fecha real (no `2026-02-30`) y **no es posterior a hoy**.
@@ -276,6 +276,7 @@ El resultado guardado de la última corrida está en `docs/cobertura.txt`. El an
 
 ```bash
 pytest tests/test_validador.py     # unitarias: regla de negocio y reloj simulado
+pytest tests/test_arquitectura.py  # la dirección de las dependencias entre capas
 pytest tests/test_integracion.py   # integración por HTTP: app Flask + SQLite
 pytest test_api.py                 # pruebas de la versión anterior de la API
 ```
@@ -284,30 +285,65 @@ Qué hay en cada archivo:
 
 - `tests/test_validador.py`: pruebas unitarias del validador, con partición de equivalencia y valores límite sobre `especie` y `fecha`. Usan un reloj fijo (`RelojFijo`, un stub) para que "hoy" sea siempre el mismo día.
 - `tests/test_integracion.py`: pruebas por HTTP de los seis endpoints (`200`, `201`, `204`, `400`, `404`). Verifican el cuerpo completo y el efecto (por ejemplo, después de un `POST`, el `GET` del nuevo id lo devuelve; después de un `DELETE`, da `404`).
+- `tests/test_arquitectura.py`: lee los `import` de cada archivo de `avistamientos/` y falla si una capa importa algo más externo que ella (la regla de la cebolla).
 - `test_api.py`: las pruebas de la versión anterior de la API (26 pruebas). Se corren aparte con `pytest test_api.py`.
 
 Cada prueba usa una base de datos temporal, así que no tocan `avistamientos.db`.
 
 ## Estructura
 
+El código sigue la **arquitectura de cebolla** (Palermo, 2008): el modelo de dominio está en el centro y las dependencias solo apuntan hacia adentro. La base de datos, Flask y el reloj real son detalles del borde.
+
 ```
-app.py                       # API (endpoints y acceso a SQLite)
-validador.py                 # Regla de negocio + interfaz Reloj (sin Flask ni SQLite)
-test_api.py                  # Pruebas de la versión anterior (pytest test_api.py)
+app.py                       # Raíz de composición: elige SQLite y el reloj real y los inyecta
 seed.py                      # Carga datos de ejemplo (opcional)
-requirements.txt             # Dependencias (Flask, pytest y pytest-cov)
-pytest.ini                   # Configuración de pytest
+avistamientos/
+  nucleo/                    # NÚCLEO: no importa Flask ni sqlite3
+    modelo_dominio/
+      avistamiento.py        # Centro: Avistamiento, ResumenDeEspecie y constantes de la regla
+    interfaces/
+      repositorio_avistamientos.py   # Interfaz del repositorio (la define el núcleo)
+      reloj.py                       # Interfaz del reloj
+    servicios_dominio/
+      validador.py           # Regla de negocio (ValidadorDeAvistamiento)
+    servicios_aplicacion/
+      servicio_avistamientos.py      # Casos de uso: listar, ver, registrar, actualizar, eliminar, resumen
+      errores.py             # DatosInvalidos, AvistamientoNoEncontrado
+  infraestructura/           # BORDE: implementa las interfaces del núcleo
+    repositorio_sqlite.py    # Único lugar con SQL y sqlite3
+    reloj_sistema.py         # Reloj real
+  ui/                        # BORDE: HTTP
+    api_flask.py             # Rutas Flask, JSON y códigos de estado
 tests/
   conftest.py                # Fixtures: cliente HTTP, base temporal y reloj fijo
   relojes.py                 # RelojFijo (stub)
   test_validador.py          # Pruebas unitarias
   test_integracion.py        # Pruebas de integración por HTTP
+  test_arquitectura.py       # Comprueba la dirección de las dependencias
+test_api.py                  # Pruebas de la versión anterior (pytest test_api.py)
+scripts/
+  muestra_api.py             # Respuestas de la API a un escenario fijo (para comparar antes y después)
+requirements.txt             # Dependencias (Flask, pytest y pytest-cov)
+pytest.ini                   # Configuración de pytest
 docs/
-  justificacion-pruebas.md   # Documento de justificación
-  cobertura.txt              # Resultado de la cobertura
+  justificacion-pruebas.md   # Documento de justificación del taller de pruebas
+  cobertura.txt              # Resultado de la cobertura (después del refactor)
+  evidencia/                 # Salidas de pruebas, cobertura y API, antes y después del refactor
 .gitignore                   # Excluye la base de datos, caché y entorno virtual
 README.md
 ```
+
+Dirección de las dependencias (de afuera hacia adentro; `tests/test_arquitectura.py` lo verifica):
+
+| Capa                                  | Puede importar                                                          |
+|---------------------------------------|-------------------------------------------------------------------------|
+| `nucleo/modelo_dominio` (centro)      | nada del proyecto                                                       |
+| `nucleo/interfaces`                   | `modelo_dominio`                                                        |
+| `nucleo/servicios_dominio`            | `modelo_dominio`, `interfaces`                                          |
+| `nucleo/servicios_aplicacion`         | `modelo_dominio`, `interfaces`, `servicios_dominio`                     |
+| `infraestructura` (borde)             | `modelo_dominio`, `interfaces` (implementa las interfaces del núcleo)   |
+| `ui` (borde)                          | el núcleo; no importa `infraestructura`                                 |
+| `app.py` (raíz de composición)        | todas: es quien las conecta                                             |
 
 ## Uso de IA
 

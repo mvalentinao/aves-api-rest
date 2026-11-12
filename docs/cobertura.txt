@@ -1,21 +1,22 @@
-============================= test session starts ==============================
-platform linux -- Python 3.13.16, pytest-9.1.1, pluggy-1.7.0
-rootdir: /home/claude/aves/aves-api-rest-main
-configfile: pytest.ini
-testpaths: tests
-plugins: platformdirs-4.12.3, anyio-4.15.1, cov-7.1.0
-collected 63 items
-
-tests/test_integracion.py ............................                   [ 44%]
-tests/test_validador.py ...................................              [100%]
-
-================================ tests coverage ================================
-_______________ coverage: platform linux, python 3.13.16-final-0 _______________
-
-Name           Stmts   Miss Branch BrPart  Cover   Missing
-----------------------------------------------------------
-app.py            74      1     12      1    98%   128
-validador.py      38      0     16      0   100%
-----------------------------------------------------------
-TOTAL            112      1     28      1    99%
-============================== 63 passed in 0.45s ==============================
+-----------------------------------------------------------------------------------------------------------------
+app.py                                                                   17      1      2      1    89%   35
+avistamientos/__init__.py                                                 0      0      0      0   100%
+avistamientos/infraestructura/__init__.py                                 0      0      0      0   100%
+avistamientos/infraestructura/reloj_sistema.py                            5      0      0      0   100%
+avistamientos/infraestructura/repositorio_sqlite.py                      56      4      2      1    91%   59-61, 91
+avistamientos/nucleo/__init__.py                                          0      0      0      0   100%
+avistamientos/nucleo/interfaces/__init__.py                               0      0      0      0   100%
+avistamientos/nucleo/interfaces/reloj.py                                  3      0      0      0   100%
+avistamientos/nucleo/interfaces/repositorio_avistamientos.py             16      0      0      0   100%
+avistamientos/nucleo/modelo_dominio/__init__.py                           0      0      0      0   100%
+avistamientos/nucleo/modelo_dominio/avistamiento.py                      19      0      0      0   100%
+avistamientos/nucleo/servicios_aplicacion/__init__.py                     0      0      0      0   100%
+avistamientos/nucleo/servicios_aplicacion/errores.py                      5      0      0      0   100%
+avistamientos/nucleo/servicios_aplicacion/servicio_avistamientos.py      35      1      8      1    95%   40
+avistamientos/nucleo/servicios_dominio/__init__.py                        0      0      0      0   100%
+avistamientos/nucleo/servicios_dominio/validador.py                      32      0     16      0   100%
+avistamientos/ui/__init__.py                                              0      0      0      0   100%
+avistamientos/ui/api_flask.py                                            40      0      0      0   100%
+-----------------------------------------------------------------------------------------------------------------
+TOTAL                                                                   228      6     28      3    96%
+============================== 76 passed in 0.44s ==============================
