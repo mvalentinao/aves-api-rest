@@ -1,12 +1,12 @@
 import os
 import tempfile
 
-# La base de datos de import (app.py llama a init_db al importarse) va a una carpeta temporal.
+# La base de datos de import (app.py arma la aplicación al importarse) va a una carpeta temporal.
 os.environ["DB_PATH"] = os.path.join(tempfile.mkdtemp(), "import.db")
 
 import pytest
 
-import app as app_module
+from app import crear_aplicacion
 
 VALIDO = {
     "especie": "colibrí",
@@ -17,11 +17,9 @@ VALIDO = {
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
+def client(tmp_path):
     """Cliente de pruebas con una base de datos vacía y aislada por cada prueba."""
-    monkeypatch.setattr(app_module, "DB_PATH", str(tmp_path / "test.db"))
-    app_module.init_db()
-    return app_module.app.test_client()
+    return crear_aplicacion(str(tmp_path / "test.db")).test_client()
 
 
 def crear(client, **cambios):

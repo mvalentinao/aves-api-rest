@@ -6,7 +6,9 @@ Uso:
 """
 import sys
 
-import app
+from app import DB_PATH
+from avistamientos.infraestructura.repositorio_sqlite import RepositorioSqlite
+from avistamientos.nucleo.modelo_dominio.avistamiento import Avistamiento
 
 DATOS = [
     ("colibrí", "Parque Nacional Chingaza", "2026-09-01", "Pablo"),
@@ -36,20 +38,17 @@ DATOS = [
 
 def main():
     reiniciar = "--reiniciar" in sys.argv[1:]
-    app.init_db()
-    with app.get_db() as conn:
-        if reiniciar:
-            conn.execute("DELETE FROM avistamientos")
-            conn.execute("DELETE FROM sqlite_sequence WHERE name = 'avistamientos'")
-        existentes = conn.execute("SELECT COUNT(*) FROM avistamientos").fetchone()[0]
-        if existentes > 0:
-            print(f"La base ya tiene {existentes} avistamientos. No se cargó nada.")
-            print("Para borrar todo y volver a cargar los ejemplos: python seed.py --reiniciar")
-            return
-        conn.executemany(
-            "INSERT INTO avistamientos (especie, lugar, fecha, observador) VALUES (?, ?, ?, ?)",
-            DATOS,
-        )
+    repositorio = RepositorioSqlite(DB_PATH)
+    repositorio.crear_esquema()
+    if reiniciar:
+        repositorio.vaciar()
+    existentes = len(repositorio.listar())
+    if existentes > 0:
+        print(f"La base ya tiene {existentes} avistamientos. No se cargó nada.")
+        print("Para borrar todo y volver a cargar los ejemplos: python seed.py --reiniciar")
+        return
+    for especie, lugar, fecha, observador in DATOS:
+        repositorio.agregar(Avistamiento(especie=especie, lugar=lugar, fecha=fecha, observador=observador))
     print(f"Base poblada con {len(DATOS)} avistamientos.")
 
 
