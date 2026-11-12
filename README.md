@@ -85,7 +85,7 @@ Al final debe aparecer una línea `Successfully installed ...` con Flask, pytest
 pytest
 ```
 
-Debe terminar con `76 passed` (63 del taller de pruebas y 13 de la prueba de arquitectura). Las pruebas usan una base de datos temporal, así que no afectan tus datos.
+Debe terminar con `83 passed` (63 del taller de pruebas, 13 de la prueba de arquitectura y 7 del servicio y el repositorio). Las pruebas usan una base de datos temporal, así que no afectan tus datos.
 
 ### Paso 6. Cargar datos de ejemplo (opcional)
 
@@ -277,6 +277,7 @@ El resultado guardado de la última corrida está en `docs/cobertura.txt`. El an
 ```bash
 pytest tests/test_validador.py     # unitarias: regla de negocio y reloj simulado
 pytest tests/test_arquitectura.py  # la dirección de las dependencias entre capas
+pytest tests/test_servicio_y_repositorio.py  # casos de uso (repositorio en memoria) y repositorio SQLite
 pytest tests/test_integracion.py   # integración por HTTP: app Flask + SQLite
 pytest test_api.py                 # pruebas de la versión anterior de la API
 ```
@@ -286,6 +287,7 @@ Qué hay en cada archivo:
 - `tests/test_validador.py`: pruebas unitarias del validador, con partición de equivalencia y valores límite sobre `especie` y `fecha`. Usan un reloj fijo (`RelojFijo`, un stub) para que "hoy" sea siempre el mismo día.
 - `tests/test_integracion.py`: pruebas por HTTP de los seis endpoints (`200`, `201`, `204`, `400`, `404`). Verifican el cuerpo completo y el efecto (por ejemplo, después de un `POST`, el `GET` del nuevo id lo devuelve; después de un `DELETE`, da `404`).
 - `tests/test_arquitectura.py`: lee los `import` de cada archivo de `avistamientos/` y falla si una capa importa algo más externo que ella (la regla de la cebolla).
+- `tests/test_servicio_y_repositorio.py`: prueba los casos de uso sin Flask ni SQLite, con un repositorio en memoria que implementa la interfaz del núcleo, y prueba el repositorio SQLite directamente.
 - `test_api.py`: las pruebas de la versión anterior de la API (26 pruebas). Se corren aparte con `pytest test_api.py`.
 
 Cada prueba usa una base de datos temporal, así que no tocan `avistamientos.db`.
@@ -320,6 +322,7 @@ tests/
   test_validador.py          # Pruebas unitarias
   test_integracion.py        # Pruebas de integración por HTTP
   test_arquitectura.py       # Comprueba la dirección de las dependencias
+  test_servicio_y_repositorio.py  # Casos de uso con repositorio en memoria; repositorio SQLite
 test_api.py                  # Pruebas de la versión anterior (pytest test_api.py)
 scripts/
   muestra_api.py             # Respuestas de la API a un escenario fijo (para comparar antes y después)
